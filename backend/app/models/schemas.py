@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 # ==================== Telemetry Schemas ====================
 
@@ -20,8 +20,7 @@ class TelemetryResponse(TelemetryCreate):
     id: int
     timestamp: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # ==================== Actuator Schemas ====================
 
@@ -42,8 +41,7 @@ class ActuatorResponse(BaseModel):
     field_area_acres: float
     accumulated_seconds_today: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # ==================== Advisory Schemas ====================
 
@@ -113,8 +111,7 @@ class CropProfileSchema(BaseModel):
     growth_stage: str
     notes: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # ==================== Simulation Schema ====================
 

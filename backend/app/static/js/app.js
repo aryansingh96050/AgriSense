@@ -1,4 +1,4 @@
-// AgriSense Frontend JavaScript Application
+// AgriSense Frontend JavaScript Application (Dark Theme Ready)
 
 let ws = null;
 let moistureChart = null;
@@ -54,6 +54,7 @@ const telemetryLogTbody = document.getElementById("telemetry-log-tbody");
 
 // Initialize on page load
 document.addEventListener("DOMContentLoaded", () => {
+  initTheme();
   initCharts();
   fetchInitialState();
   initWebSocket();
@@ -69,8 +70,62 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+// ==================== Theme Toggle ====================
+function initTheme() {
+  const savedTheme = localStorage.getItem("agrisense_theme") || "dark";
+  const html = document.documentElement;
+  const themeIcon = document.getElementById("theme-icon");
+
+  if (savedTheme === "dark") {
+    html.classList.add("dark");
+    if (themeIcon) themeIcon.className = "fa-solid fa-sun text-sm text-amber-400";
+  } else {
+    html.classList.remove("dark");
+    if (themeIcon) themeIcon.className = "fa-solid fa-moon text-sm text-slate-600";
+  }
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const themeIcon = document.getElementById("theme-icon");
+  const isDark = html.classList.toggle("dark");
+
+  if (isDark) {
+    localStorage.setItem("agrisense_theme", "dark");
+    themeIcon.className = "fa-solid fa-sun text-sm text-amber-400";
+  } else {
+    localStorage.setItem("agrisense_theme", "light");
+    themeIcon.className = "fa-solid fa-moon text-sm text-slate-600";
+  }
+
+  // Update chart axes colors on theme switch
+  updateChartsTheme(isDark);
+}
+
+function updateChartsTheme(isDark) {
+  const gridColor = isDark ? "rgba(255, 255, 255, 0.08)" : "#f1f5f9";
+  const textColor = isDark ? "#94a3b8" : "#64748b";
+
+  if (moistureChart) {
+    moistureChart.options.scales.y.grid.color = gridColor;
+    moistureChart.options.scales.y.ticks.color = textColor;
+    moistureChart.options.scales.x.ticks.color = textColor;
+    moistureChart.update();
+  }
+  if (npkChart) {
+    npkChart.options.scales.y.grid.color = gridColor;
+    npkChart.options.scales.y.ticks.color = textColor;
+    npkChart.options.scales.x.ticks.color = textColor;
+    npkChart.update();
+  }
+}
+
 // ==================== Chart Initialization ====================
 function initCharts() {
+  const isDark = document.documentElement.classList.contains("dark");
+  const gridColor = isDark ? "rgba(255, 255, 255, 0.08)" : "#f1f5f9";
+  const textColor = isDark ? "#94a3b8" : "#64748b";
+
   // Moisture Chart
   const ctxMoisture = document.getElementById("moistureChart").getContext("2d");
   moistureChart = new Chart(ctxMoisture, {
@@ -81,8 +136,8 @@ function initCharts() {
         {
           label: "Soil Moisture (%)",
           data: [],
-          borderColor: "#0284c7",
-          backgroundColor: "rgba(14, 165, 233, 0.12)",
+          borderColor: "#38bdf8",
+          backgroundColor: "rgba(14, 165, 233, 0.18)",
           borderWidth: 2.5,
           tension: 0.35,
           fill: true,
@@ -106,12 +161,12 @@ function initCharts() {
         y: {
           min: 0,
           max: 100,
-          grid: { color: "#f1f5f9" },
-          ticks: { callback: (v) => v + "%" }
+          grid: { color: gridColor },
+          ticks: { color: textColor, callback: (v) => v + "%" }
         },
         x: {
           grid: { display: false },
-          ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 7 }
+          ticks: { color: textColor, maxRotation: 0, autoSkip: true, maxTicksLimit: 7 }
         }
       }
     }
@@ -127,13 +182,15 @@ function initCharts() {
         {
           label: "Current Level (ppm)",
           data: [45, 30, 150],
-          backgroundColor: ["#10b981", "#3b82f6", "#f59e0b"],
+          backgroundColor: ["#10b981", "#0284c7", "#f59e0b"],
           borderRadius: 8
         },
         {
           label: "Target Requirement (ppm)",
           data: [120, 60, 40],
-          backgroundColor: ["#d1fae5", "#dbeafe", "#fef3c7"],
+          backgroundColor: ["rgba(16, 185, 129, 0.25)", "rgba(14, 165, 233, 0.25)", "rgba(245, 158, 11, 0.25)"],
+          borderColor: ["#059669", "#0284c7", "#d97706"],
+          borderWidth: 1.5,
           borderRadius: 8
         }
       ]
@@ -142,14 +199,18 @@ function initCharts() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: "top", labels: { boxWidth: 12, font: { size: 10 } } }
+        legend: { position: "top", labels: { boxWidth: 12, color: textColor, font: { size: 11 } } }
       },
       scales: {
         y: {
           beginAtZero: true,
-          grid: { color: "#f1f5f9" }
+          grid: { color: gridColor },
+          ticks: { color: textColor }
         },
-        x: { grid: { display: false } }
+        x: {
+          grid: { display: false },
+          ticks: { color: textColor }
+        }
       }
     }
   });
@@ -163,8 +224,9 @@ function initWebSocket() {
   ws = new WebSocket(wsUrl);
 
   ws.onopen = () => {
-    connectionDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
+    connectionDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400";
     connectionStatus.innerText = "Live Cloud Stream";
+    connectionStatus.className = "text-emerald-400 font-semibold";
   };
 
   ws.onmessage = (event) => {
@@ -184,13 +246,14 @@ function initWebSocket() {
   ws.onclose = () => {
     connectionDot.className = "w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse";
     connectionStatus.innerText = "Reconnecting...";
+    connectionStatus.className = "text-amber-400";
     setTimeout(initWebSocket, 4000);
   };
 
   ws.onerror = () => {
     connectionDot.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
     connectionStatus.innerText = "Offline (Polling)";
-    // Fallback polling
+    connectionStatus.className = "text-rose-400";
     setTimeout(pollTelemetry, 3000);
   };
 }
@@ -281,13 +344,13 @@ function updateTelemetryCards(data) {
 
   // Update pH badge
   if (data.ph_level < 6.0) {
-    phBadge.className = "px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 text-[10px] font-semibold";
+    phBadge.className = "px-2 py-0.5 rounded-full bg-rose-950/80 text-rose-400 border border-rose-800 text-[10px] font-bold";
     phBadge.innerText = "Acidic";
   } else if (data.ph_level > 7.5) {
-    phBadge.className = "px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-semibold";
+    phBadge.className = "px-2 py-0.5 rounded-full bg-amber-950/80 text-amber-400 border border-amber-800 text-[10px] font-bold";
     phBadge.innerText = "Alkaline";
   } else {
-    phBadge.className = "px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-semibold";
+    phBadge.className = "px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-800 text-[10px] font-bold";
     phBadge.innerText = "Optimal";
   }
 
@@ -303,27 +366,27 @@ function updateActuatorUI(act) {
   currentAutoMode = act.auto_mode;
 
   if (currentPumpOn) {
-    pumpCard.classList.add("pump-active", "border-sky-300");
+    pumpCard.classList.add("pump-active");
     pumpStateBadge.innerText = "RUNNING";
-    pumpStateBadge.className = "text-2xl font-black text-sky-600 animate-pulse";
-    pumpIconBg.className = "w-8 h-8 rounded-lg bg-sky-500 text-white flex items-center justify-center";
+    pumpStateBadge.className = "text-2xl font-black text-sky-400 animate-pulse";
+    pumpIconBg.className = "w-8 h-8 rounded-lg bg-sky-500 text-white flex items-center justify-center shadow-lg shadow-sky-500/30";
     pumpOverrideBtn.innerText = "Stop Pump";
-    pumpOverrideBtn.className = "px-3 py-1 text-xs font-bold rounded-lg bg-rose-600 hover:bg-rose-700 text-white transition shadow-sm";
+    pumpOverrideBtn.className = "px-3 py-1 text-xs font-bold rounded-lg bg-rose-600 hover:bg-rose-500 text-white transition shadow-md shadow-rose-600/30";
   } else {
-    pumpCard.classList.remove("pump-active", "border-sky-300");
+    pumpCard.classList.remove("pump-active");
     pumpStateBadge.innerText = "OFF";
-    pumpStateBadge.className = "text-2xl font-black text-slate-500";
-    pumpIconBg.className = "w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center";
+    pumpStateBadge.className = "text-2xl font-black text-slate-400";
+    pumpIconBg.className = "w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 flex items-center justify-center";
     pumpOverrideBtn.innerText = "Start Pump";
-    pumpOverrideBtn.className = "px-3 py-1 text-xs font-bold rounded-lg bg-brand-600 hover:bg-brand-700 text-white transition shadow-sm";
+    pumpOverrideBtn.className = "px-3 py-1 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition shadow-md shadow-emerald-600/30";
   }
 
   if (currentAutoMode) {
     toggleAutoBtn.innerHTML = '<i class="fa-solid fa-robot mr-1"></i>AUTO';
-    toggleAutoBtn.className = "px-2.5 py-1 text-xs font-semibold rounded-full bg-brand-100 text-brand-700 border border-brand-200 hover:bg-brand-200 transition";
+    toggleAutoBtn.className = "px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-800 hover:bg-emerald-900 transition";
   } else {
     toggleAutoBtn.innerHTML = '<i class="fa-solid fa-hand mr-1"></i>MANUAL';
-    toggleAutoBtn.className = "px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-200 text-slate-700 border border-slate-300 hover:bg-slate-300 transition";
+    toggleAutoBtn.className = "px-2.5 py-1 text-xs font-bold rounded-full bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-750 transition";
   }
 }
 
@@ -351,19 +414,19 @@ function renderIrrigationAdvisory(irr) {
 
   // Badge Styling
   if (irr.status === "OPTIMAL") {
-    irrigationUrgencyBadge.className = "px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700";
+    irrigationUrgencyBadge.className = "px-3 py-1 rounded-full text-xs font-bold bg-emerald-950/80 text-emerald-400 border border-emerald-800/80";
     irrigationUrgencyBadge.innerText = "Optimal Moisture";
   } else if (irr.status === "RAIN_PREDICTED_SKIP") {
-    irrigationUrgencyBadge.className = "px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-100 text-sky-700";
+    irrigationUrgencyBadge.className = "px-3 py-1 rounded-full text-xs font-bold bg-sky-950/80 text-sky-400 border border-sky-800/80";
     irrigationUrgencyBadge.innerText = "Rain Deferred";
   } else if (irr.status === "CRITICAL_DROUGHT") {
-    irrigationUrgencyBadge.className = "px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-700 animate-pulse";
+    irrigationUrgencyBadge.className = "px-3 py-1 rounded-full text-xs font-bold bg-rose-950/80 text-rose-400 border border-rose-800/80 animate-pulse";
     irrigationUrgencyBadge.innerText = "Critical Drought";
   } else if (irr.status === "DRY_NEEDS_WATER") {
-    irrigationUrgencyBadge.className = "px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700";
+    irrigationUrgencyBadge.className = "px-3 py-1 rounded-full text-xs font-bold bg-amber-950/80 text-amber-400 border border-amber-800/80";
     irrigationUrgencyBadge.innerText = "Irrigate Soon";
   } else {
-    irrigationUrgencyBadge.className = "px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700";
+    irrigationUrgencyBadge.className = "px-3 py-1 rounded-full text-xs font-bold bg-purple-950/80 text-purple-400 border border-purple-800/80";
     irrigationUrgencyBadge.innerText = irr.status;
   }
 }
@@ -410,20 +473,20 @@ function populateHistoryChart(history) {
 
 function appendLogRow(data, pumpOn, status) {
   const tr = document.createElement("tr");
-  tr.className = "hover:bg-slate-50/80 transition";
+  tr.className = "hover:bg-slate-800/50 transition";
   const timeStr = new Date(data.timestamp).toLocaleTimeString();
 
   tr.innerHTML = `
-    <td class="py-2.5 px-3 font-mono text-[11px] text-slate-500">${timeStr}</td>
-    <td class="py-2.5 px-3 font-semibold ${data.soil_moisture < 35 ? 'text-rose-600' : 'text-slate-700'}">${data.soil_moisture.toFixed(1)}%</td>
-    <td class="py-2.5 px-3">${data.temperature.toFixed(1)}°C / ${data.humidity.toFixed(1)}%</td>
-    <td class="py-2.5 px-3 text-slate-500 font-mono">${Math.round(data.nitrogen)}-${Math.round(data.phosphorus)}-${Math.round(data.potassium)}</td>
+    <td class="py-2.5 px-3 font-mono text-[11px] text-slate-400">${timeStr}</td>
+    <td class="py-2.5 px-3 font-bold ${data.soil_moisture < 35 ? 'text-rose-400' : 'text-slate-200'}">${data.soil_moisture.toFixed(1)}%</td>
+    <td class="py-2.5 px-3 text-slate-300">${data.temperature.toFixed(1)}°C / ${data.humidity.toFixed(1)}%</td>
+    <td class="py-2.5 px-3 text-emerald-400 font-mono">${Math.round(data.nitrogen)}-${Math.round(data.phosphorus)}-${Math.round(data.potassium)}</td>
     <td class="py-2.5 px-3">
-      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${pumpOn ? 'bg-sky-100 text-sky-700' : 'bg-slate-100 text-slate-500'}">
+      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${pumpOn ? 'bg-sky-950/80 text-sky-400 border border-sky-800/80' : 'bg-slate-800 text-slate-400 border border-slate-700'}">
         ${pumpOn ? 'ON' : 'OFF'}
       </span>
     </td>
-    <td class="py-2.5 px-3 font-medium text-slate-700">${status}</td>
+    <td class="py-2.5 px-3 font-medium text-slate-200">${status}</td>
   `;
 
   // Prepend to top of table
