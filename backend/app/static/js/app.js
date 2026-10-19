@@ -288,13 +288,14 @@ async function fetchInitialState() {
       updateActuatorUI(act);
     }
 
-    // 2. Fetch History for Chart
+    // 2. Fetch History for Chart & Table
     const histRes = await fetch("/api/v1/telemetry/history?limit=15");
     if (histRes.ok) {
       const history = await histRes.json();
       if (history.length > 0) {
         populateHistoryChart(history);
         updateTelemetryCards(history[history.length - 1]);
+        populateInitialTable(history);
       }
     }
 
@@ -469,6 +470,17 @@ function populateHistoryChart(history) {
   moistureChart.data.labels = labels;
   moistureChart.data.datasets[0].data = moistureData;
   moistureChart.update();
+}
+
+function populateInitialTable(history) {
+  if (!history || history.length === 0) return;
+  telemetryLogTbody.innerHTML = "";
+  // history is chronological; show recent rows
+  const recent = [...history].slice(-7);
+  recent.forEach((h) => {
+    const status = h.soil_moisture < 30 ? "CRITICAL_DROUGHT" : (h.soil_moisture > 75 ? "SATURATED" : "OPTIMAL");
+    appendLogRow(h, currentPumpOn, status);
+  });
 }
 
 function appendLogRow(data, pumpOn, status) {
