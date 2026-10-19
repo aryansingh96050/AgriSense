@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgriSense: IoT + Cloud Smart Irrigation & Fertilization Advisor</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <!-- Chart.js CDN for interactive historical graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header>
+    <div class="header-container">
+      <div class="brand">
+        <div class="logo-badge">🌾</div>
+        <div>
+          <h1 id="txt-app-title">AgriSense</h1>
+          <p id="txt-app-subtitle">IoT + Cloud Smart Irrigation & Fertilization Advisor (स्मार्ट सिंचाई एवं खाद सलाहकार)</p>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <div class="node-pill">
+          <div class="pulsing-dot"></div>
+          <span id="node-status-text">ESP32 Node-01: ONLINE</span>
+        </div>
+        <div class="node-pill" style="background: rgba(2, 132, 199, 0.15); border-color: rgba(2, 132, 199, 0.3); color: #38bdf8;">
+          🔋 <span id="batt-text">88% (4.05V)</span>
+        </div>
+        <button class="lang-btn" id="btn-toggle-lang" onclick="toggleLanguage()">
+          🌐 हिंदी में देखें
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- Farm & Crop Context Bar -->
+    <div class="farm-context-card">
+      <div class="farm-selectors">
+        <div class="selector-group">
+          <label id="lbl-crop">Select Crop (फसल)</label>
+          <select id="select-crop" onchange="onCropChange()">
+            <option value="wheat">🌾 Wheat (गेहूं)</option>
+            <option value="paddy">🌾 Paddy / Rice (धान)</option>
+            <option value="tomato">🍅 Tomato (टमाटर)</option>
+            <option value="cotton">🌿 Cotton (कपास)</option>
+            <option value="potato">🥔 Potato (आलू)</option>
+            <option value="sugarcane">🎋 Sugarcane (गन्ना)</option>
+          </select>
+        </div>
+
+        <div class="selector-group">
+          <label id="lbl-stage">Growth Stage (फसल अवस्था)</label>
+          <select id="select-stage">
+            <!-- Dynamically populated -->
+          </select>
+        </div>
+
+        <div class="selector-group">
+          <label id="lbl-field-size">Field Area (एकड़)</label>
+          <input type="number" id="input-field-size" value="2.5" step="0.5" min="0.5" max="50">
+        </div>
+
+        <div class="selector-group">
+          <label id="lbl-farmer-phone">Farmer WhatsApp / SMS (फोन नंबर)</label>
+          <input type="text" id="input-farmer-phone" value="+919876543210">
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="saveSettings()">
+        💾 <span id="btn-save-text">Save & Update Advisor</span>
+      </button>
+    </div>
+
+    <!-- Quick Scenario Testing Bar -->
+    <div class="scenarios-card">
+      <div>
+        <h4 style="font-size: 0.95rem; margin-bottom: 2px;">🧪 Quick Sensor Scenarios (टेस्टिंग परिदृश्य)</h4>
+        <p style="font-size: 0.78rem; color: var(--text-muted);">Simulate real field conditions instantly to test irrigation & fertilizer alerts</p>
+      </div>
+      <div class="scenario-buttons">
+        <button class="btn-scenario" onclick="triggerScenario('drought')">☀️ Drought / Dry (सूखा 19%)</button>
+        <button class="btn-scenario" onclick="triggerScenario('low_nitrogen')">📉 Low Nitrogen (कम यूरिया)</button>
+        <button class="btn-scenario" onclick="triggerScenario('acidic')">🍋 Acidic Soil (अम्लीय pH 5.2)</button>
+        <button class="btn-scenario" onclick="triggerScenario('rain')">🌧️ Saturated / Rain (जलभराव 72%)</button>
+        <button class="btn-scenario" onclick="triggerScenario('optimal')">✅ All Optimal (सब सामान्य)</button>
+      </div>
+    </div>
+
+    <!-- 4 Main Sensor Telemetry Cards -->
+    <div class="metrics-grid">
+      
+      <!-- Soil Moisture -->
+      <div class="metric-card" id="card-moisture">
+        <div class="metric-header">
+          <span class="metric-title" id="lbl-moist-title">💧 Soil Moisture (मिट्टी में नमी)</span>
+          <span class="metric-icon">🌊</span>
+        </div>
+        <div class="metric-value-wrap">
+          <span class="metric-value" id="val-moisture">--</span>
+          <span class="metric-unit">%</span>
+        </div>
+        <div class="progress-container">
+          <div class="progress-bar" id="bar-moisture" style="width: 0%; background: var(--primary);"></div>
+        </div>
+        <div class="metric-footer">
+          <span id="target-moisture-text" style="color: var(--text-muted);">Target: 40% - 65%</span>
+          <span class="badge" id="badge-moisture">Checking...</span>
+        </div>
+      </div>
+
+      <!-- Soil Temperature & EC -->
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-title" id="lbl-temp-title">🌡️ Soil Temp & EC (तापमान व चालकता)</span>
+          <span class="metric-icon">☀️</span>
+        </div>
+        <div class="metric-value-wrap">
+          <span class="metric-value" id="val-temperature">--</span>
+          <span class="metric-unit">°C</span>
+        </div>
+        <div class="metric-footer" style="margin-top: 18px;">
+          <span style="color: var(--text-muted);">EC: <strong id="val-ec" style="color: var(--text-main);">--</strong> µS/cm</span>
+          <span class="badge badge-info" id="badge-temp">Normal</span>
+        </div>
+      </div>
+
+      <!-- Soil pH -->
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-title" id="lbl-ph-title">🧪 Soil pH (मिट्टी का पीएच)</span>
+          <span class="metric-icon">🧬</span>
+        </div>
+        <div class="metric-value-wrap">
+          <span class="metric-value" id="val-ph">--</span>
+          <span class="metric-unit">pH</span>
+        </div>
+        <div class="progress-container">
+          <div class="progress-bar" id="bar-ph" style="width: 50%; background: #38bdf8;"></div>
+        </div>
+        <div class="metric-footer">
+          <span id="ph-range-text" style="color: var(--text-muted);">Optimal: 6.0 - 7.5</span>
+          <span class="badge" id="badge-ph">Optimal</span>
+        </div>
+      </div>
+
+      <!-- NPK Levels -->
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-title" id="lbl-npk-title">🌱 Soil NPK (नाइट्रोजन, फॉस्फोरस, पोटाश)</span>
+          <span class="metric-icon">🌿</span>
+        </div>
+        <div class="npk-bars">
+          <!-- N -->
+          <div class="npk-item">
+            <div class="npk-label-row">
+              <span>Nitrogen (N)</span>
+              <span><strong id="val-n">--</strong> / <span id="target-n">120</span> mg/kg</span>
+            </div>
+            <div class="progress-container" style="margin: 2px 0;">
+              <div class="progress-bar" id="bar-n" style="width: 0%; background: #10b981;"></div>
+            </div>
+          </div>
+          <!-- P -->
+          <div class="npk-item">
+            <div class="npk-label-row">
+              <span>Phosphorus (P)</span>
+              <span><strong id="val-p">--</strong> / <span id="target-p">50</span> mg/kg</span>
+            </div>
+            <div class="progress-container" style="margin: 2px 0;">
+              <div class="progress-bar" id="bar-p" style="width: 0%; background: #38bdf8;"></div>
+            </div>
+          </div>
+          <!-- K -->
+          <div class="npk-item">
+            <div class="npk-label-row">
+              <span>Potassium (K)</span>
+              <span><strong id="val-k">--</strong> / <span id="target-k">40</span> mg/kg</span>
+            </div>
+            <div class="progress-container" style="margin: 2px 0;">
+              <div class="progress-bar" id="bar-k" style="width: 0%; background: #f59e0b;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Action & Advisory Hub + Smartphone Simulator -->
+    <div class="action-grid">
+
+      <!-- Left Column: Intelligent Agronomy Advisory -->
+      <div class="advisory-card">
+        
+        <!-- Irrigation Advisory Section -->
+        <div>
+          <div class="advisory-section-title">
+            <span id="txt-irrig-heading">💧 Irrigation Advisor (सिंचाई सलाहकार)</span>
+            <span class="badge" id="badge-irrig-urgency">EVALUATING</span>
+          </div>
+          
+          <div class="advice-box" id="box-irrigation" style="margin-top: 14px;">
+            <h4 id="title-irrig-advice">Irrigation Recommendation</h4>
+            <p id="desc-irrig-advice">Analyzing soil moisture levels...</p>
+          </div>
+
+          <!-- Actuator / Pump Switch Controller -->
+          <div class="pump-controller-box" style="margin-top: 14px;">
+            <div>
+              <h5 style="font-size: 0.92rem; font-weight: 700;">⚙️ Solenoid / Pump Control (पंप नियंत्रण)</h5>
+              <p style="font-size: 0.78rem; color: var(--text-muted);" id="pump-status-sub">
+                Mode: Auto-Irrigation Enabled | Status: OFF
+              </p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span id="pump-switch-label" style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">PUMP OFF</span>
+              <label class="switch">
+                <input type="checkbox" id="pump-toggle" onchange="onPumpToggle(this.checked)">
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fertilization (NPK & pH) Advisory Section -->
+        <div>
+          <div class="advisory-section-title">
+            <span id="txt-fert-heading">🌱 Fertilization Advisor (खाद व पोषण सलाहकार)</span>
+            <span class="badge badge-success" id="badge-fert-status">OPTIMAL</span>
+          </div>
+
+          <div class="advice-box" id="box-fertilizer" style="margin-top: 14px;">
+            <h4 id="title-fert-advice">Soil Fertility Assessment</h4>
+            <p id="desc-fert-advice">Comparing current NPK with crop stage target...</p>
+            <div id="fert-doses-container" style="margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
+              <!-- Injected dynamically -->
+            </div>
+          </div>
+
+          <div class="advice-box" id="box-ph" style="margin-top: 12px; border-left-color: #38bdf8;">
+            <h4 id="title-ph-advice">Soil Reaction & pH Correction</h4>
+            <p id="desc-ph-advice">pH is balanced for nutrient absorption.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Interactive Smartphone Simulator (WhatsApp & SMS) -->
+      <div class="phone-mockup-card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 style="font-size: 1.05rem; font-weight: 700;">📱 Farmer Alert Simulator</h3>
+          <button class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="triggerTestAlert()">
+            🔔 Send Alert Now
+          </button>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted);">
+          Simulates how SMS and WhatsApp alerts are dispatched to the farmer's mobile phone:
+        </p>
+
+        <!-- Simulated Phone Screen -->
+        <div class="phone-screen">
+          <div class="phone-top-bar">
+            <div class="phone-avatar">🌾</div>
+            <div class="phone-contact-info">
+              <h5>AgriSense Advisor 🌱</h5>
+              <span>online • Smart Agriculture Bot</span>
+            </div>
+          </div>
+
+          <div class="phone-chat-body" id="phone-chat-body">
+            <!-- Simulated messages will appear here -->
+            <div class="chat-bubble whatsapp">
+              🌾 *AgriSense - किसान सलाहकार अलर्ट* 🌾
+              किसान: रमेश कुमार | खेत: 2.5 एकड़
+              फसल: गेहूं (सीआरआई अवस्था)
+              
+              💧 *सिंचाई सलाह:*
+              • मिट्टी में नमी 45% अनुकूल है।
+              
+              🌱 *खाद सलाह:*
+              • सभी पोषक तत्व (NPK) संतुलित हैं।
+              <span class="chat-time">Just now</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Historical Telemetry Trends Chart -->
+    <div class="chart-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 1.05rem; font-weight: 700;" id="txt-chart-heading">📈 Real-Time Sensor Telemetry Trends (24h)</h3>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">Auto-updating every 5 seconds</span>
+      </div>
+      <div style="height: 300px; width: 100%;">
+        <canvas id="telemetryChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

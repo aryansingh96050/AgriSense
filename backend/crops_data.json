@@ -1,0 +1,230 @@
+{
+  "wheat": {
+    "name_en": "Wheat",
+    "name_hi": "गेहूं",
+    "moisture_optimal_min": 40.0,
+    "moisture_optimal_max": 65.0,
+    "moisture_critical_min": 25.0,
+    "ph_min": 6.0,
+    "ph_max": 7.5,
+    "temp_optimal_min": 15.0,
+    "temp_optimal_max": 25.0,
+    "recommended_drip_mins": 50,
+    "stages": {
+      "crown_root": {
+        "name_en": "Crown Root Initiation (20-25 DAS)",
+        "name_hi": "सीआरआई / जड़ विकास (20-25 दिन)",
+        "target_n": 120,
+        "target_p": 50,
+        "target_k": 40,
+        "critical_irrigation": true,
+        "advice_hi": "यह सिंचाई के लिए सबसे संवेदनशील समय है। अगर नमी कम है, तो तुरंत सिंचाई करें।"
+      },
+      "tillering": {
+        "name_en": "Tillering & Vegetative",
+        "name_hi": "कल्ले फूटना (टिलरिंग)",
+        "target_n": 140,
+        "target_p": 45,
+        "target_k": 40,
+        "critical_irrigation": false,
+        "advice_hi": "नाइट्रोजन (यूरिया) की पहली टॉप-ड्रेसिंग करें ताकि अधिक कल्ले निकलें।"
+      },
+      "flowering": {
+        "name_en": "Flowering & Heading",
+        "name_hi": "फूल और बालियां निकलना",
+        "target_n": 90,
+        "target_p": 40,
+        "target_k": 50,
+        "critical_irrigation": true,
+        "advice_hi": "इस समय नमी बनाए रखें, दाना भराव के लिए पोटाश (MOP) आवश्यक है।"
+      },
+      "grain_filling": {
+        "name_en": "Milking & Grain Filling",
+        "name_hi": "दुग्धावस्था व दाना भराव",
+        "target_n": 60,
+        "target_p": 30,
+        "target_k": 55,
+        "critical_irrigation": true,
+        "advice_hi": "हल्की सिंचाई करें, तेज हवा के समय पानी न दें ताकि फसल गिरे नहीं।"
+      }
+    }
+  },
+  "paddy": {
+    "name_en": "Paddy / Rice",
+    "name_hi": "धान (चावल)",
+    "moisture_optimal_min": 65.0,
+    "moisture_optimal_max": 90.0,
+    "moisture_critical_min": 50.0,
+    "ph_min": 5.5,
+    "ph_max": 6.8,
+    "temp_optimal_min": 22.0,
+    "temp_optimal_max": 32.0,
+    "recommended_drip_mins": 90,
+    "stages": {
+      "transplanting": {
+        "name_en": "Transplanting & Early Tillering",
+        "name_hi": "रोपाई व प्रारंभिक अवस्था",
+        "target_n": 100,
+        "target_p": 60,
+        "target_k": 50,
+        "critical_irrigation": true,
+        "advice_hi": "खेत में 2-3 सेमी पानी का स्तर बनाए रखें। डीएपी और जिंक सल्फेट डालें।"
+      },
+      "panicle_initiation": {
+        "name_en": "Panicle Initiation",
+        "name_hi": "बालियां बनना (पैनिकल)",
+        "target_n": 130,
+        "target_p": 40,
+        "target_k": 60,
+        "critical_irrigation": true,
+        "advice_hi": "यूरिया और एमओपी (पोटाश) की खुराक दें। पानी की कमी बिल्कुल न होने दें।"
+      },
+      "flowering": {
+        "name_en": "Flowering / Milk Stage",
+        "name_hi": "फूल और दुग्धावस्था",
+        "target_n": 70,
+        "target_p": 30,
+        "target_k": 60,
+        "critical_irrigation": true,
+        "advice_hi": "दाना वजनदार बनाने के लिए पोटाश का स्तर सही रखें।"
+      }
+    }
+  },
+  "tomato": {
+    "name_en": "Tomato",
+    "name_hi": "टमाटर",
+    "moisture_optimal_min": 45.0,
+    "moisture_optimal_max": 70.0,
+    "moisture_critical_min": 30.0,
+    "ph_min": 6.0,
+    "ph_max": 6.8,
+    "temp_optimal_min": 18.0,
+    "temp_optimal_max": 28.0,
+    "recommended_drip_mins": 45,
+    "stages": {
+      "vegetative": {
+        "name_en": "Vegetative Growth",
+        "name_hi": "वानस्पतिक वृद्धि",
+        "target_n": 150,
+        "target_p": 60,
+        "target_k": 120,
+        "critical_irrigation": false,
+        "advice_hi": "पौधे के फैलाव के लिए 19:19:19 एनपीके फर्टिगेशन दें।"
+      },
+      "flowering": {
+        "name_en": "Flowering & Fruit Set",
+        "name_hi": "फूल और फल बनना",
+        "target_n": 120,
+        "target_p": 80,
+        "target_k": 160,
+        "critical_irrigation": true,
+        "advice_hi": "फूल झड़ने से रोकने के लिए नमी स्थिर रखें। फॉस्फोरस और बोरॉन महत्वपूर्ण हैं।"
+      },
+      "fruiting": {
+        "name_en": "Fruit Development & Ripening",
+        "name_hi": "फल विकास व पकाई",
+        "target_n": 90,
+        "target_p": 50,
+        "target_k": 220,
+        "critical_irrigation": true,
+        "advice_hi": "फलों की चमक और स्वाद के लिए पोटाश (0:0:50) फर्टिगेशन में दें।"
+      }
+    }
+  },
+  "cotton": {
+    "name_en": "Cotton",
+    "name_hi": "कपास",
+    "moisture_optimal_min": 35.0,
+    "moisture_optimal_max": 60.0,
+    "moisture_critical_min": 25.0,
+    "ph_min": 6.5,
+    "ph_max": 7.8,
+    "temp_optimal_min": 25.0,
+    "temp_optimal_max": 35.0,
+    "recommended_drip_mins": 60,
+    "stages": {
+      "vegetative": {
+        "name_en": "Square Formation",
+        "name_hi": "फूल कलियां (स्क्वायर)",
+        "target_n": 130,
+        "target_p": 50,
+        "target_k": 60,
+        "critical_irrigation": false,
+        "advice_hi": "शाखाओं की मजबूत बढ़वार के लिए संतुलित खाद दें।"
+      },
+      "boll_formation": {
+        "name_en": "Boll Development",
+        "name_hi": "टिंडे (बॉल्स) बनना",
+        "target_n": 110,
+        "target_p": 45,
+        "target_k": 90,
+        "critical_irrigation": true,
+        "advice_hi": "टिंडे गिरने से बचाने के लिए समय पर सिंचाई और पोटाश का छिड़काव करें।"
+      }
+    }
+  },
+  "potato": {
+    "name_en": "Potato",
+    "name_hi": "आलू",
+    "moisture_optimal_min": 50.0,
+    "moisture_optimal_max": 75.0,
+    "moisture_critical_min": 35.0,
+    "ph_min": 5.2,
+    "ph_max": 6.4,
+    "temp_optimal_min": 16.0,
+    "temp_optimal_max": 24.0,
+    "recommended_drip_mins": 40,
+    "stages": {
+      "vegetative": {
+        "name_en": "Vegetative & Tuber Initiation",
+        "name_hi": "वानस्पतिक व कंद बनना",
+        "target_n": 140,
+        "target_p": 70,
+        "target_k": 110,
+        "critical_irrigation": true,
+        "advice_hi": "कंदों की संख्या बढ़ाने के लिए मिट्टी में उचित नमी बनाए रखें।"
+      },
+      "tuber_bulking": {
+        "name_en": "Tuber Bulking",
+        "name_hi": "कंद का आकार बढ़ना",
+        "target_n": 90,
+        "target_p": 40,
+        "target_k": 180,
+        "critical_irrigation": true,
+        "advice_hi": "आलू का आकार बड़ा करने के लिए पोटाश और नियमित हल्की सिंचाई आवश्यक है।"
+      }
+    }
+  },
+  "sugarcane": {
+    "name_en": "Sugarcane",
+    "name_hi": "गन्ना",
+    "moisture_optimal_min": 45.0,
+    "moisture_optimal_max": 70.0,
+    "moisture_critical_min": 30.0,
+    "ph_min": 6.0,
+    "ph_max": 7.5,
+    "temp_optimal_min": 24.0,
+    "temp_optimal_max": 35.0,
+    "recommended_drip_mins": 75,
+    "stages": {
+      "formative": {
+        "name_en": "Formative / Tillering",
+        "name_hi": "कल्ले फूटना (टिलरिंग)",
+        "target_n": 160,
+        "target_p": 60,
+        "target_k": 80,
+        "critical_irrigation": true,
+        "advice_hi": "गन्ने में इस समय यूरिया और सिंचाई से कल्ले तेजी से बढ़ते हैं।"
+      },
+      "grand_growth": {
+        "name_en": "Grand Growth Phase",
+        "name_hi": "तीव्र बढ़वार अवस्था",
+        "target_n": 140,
+        "target_p": 50,
+        "target_k": 100,
+        "critical_irrigation": true,
+        "advice_hi": "पौधे की लम्बाई और मोटाई के लिए पर्याप्त पानी व पोषक तत्व दें।"
+      }
+    }
+  }
+}

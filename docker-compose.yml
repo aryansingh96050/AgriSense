@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  agrisense-server:
+    build: .
+    container_name: agrisense_server
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=AgriSense
+      - APP_ENV=production
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DATABASE_URL=sqlite:///./agrisense.db
+    volumes:
+      - agrisense_data:/app
+
+  agrisense-simulator:
+    build: .
+    container_name: agrisense_simulator
+    restart: unless-stopped
+    command: python simulator/iot_device_sim.py
+    environment:
+      - AGRISENSE_SERVER_URL=http://agrisense-server:8000
+    depends_on:
+      - agrisense-server
+
+volumes:
+  agrisense_data:

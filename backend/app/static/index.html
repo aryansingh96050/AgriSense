@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgriSense | Smart Irrigation & Fertilization Advisor</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="/static/css/custom.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <!-- Top Navigation Bar -->
+  <header class="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
+          <i class="fa-solid fa-leaf text-xl"></i>
+        </div>
+        <div>
+          <span class="text-xl font-bold bg-gradient-to-r from-brand-700 to-emerald-500 bg-clip-text text-transparent">AgriSense</span>
+          <span class="hidden sm:inline-block ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-brand-700 border border-emerald-200">IoT + Cloud Cloud Advisor</span>
+        </div>
+      </div>
+
+      <!-- System Live Status & Node Info -->
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2 text-xs font-medium bg-slate-100 py-1.5 px-3 rounded-full border border-slate-200">
+          <span id="connection-dot" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
+          <span id="connection-status">Connecting...</span>
+        </div>
+        <div class="hidden md:flex items-center space-x-2 text-xs text-slate-500 bg-slate-50 py-1.5 px-3 rounded-full border border-slate-200">
+          <i class="fa-solid fa-microchip text-slate-400"></i>
+          <span>Node: <strong id="node-id" class="text-slate-700">ESP32_NODE_01</strong></span>
+        </div>
+        <a href="/docs" target="_blank" class="text-xs bg-brand-600 hover:bg-brand-700 text-white font-medium py-1.5 px-3 rounded-lg shadow-sm transition">
+          <i class="fa-solid fa-code mr-1"></i> API Docs
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Top Info & Settings Bar -->
+    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 flex flex-wrap gap-4 items-center justify-between">
+      <div class="flex flex-wrap items-center gap-4">
+        <div class="flex items-center space-x-2">
+          <label for="crop-selector" class="text-xs font-semibold text-slate-600 uppercase tracking-wider">Active Crop:</label>
+          <select id="crop-selector" class="text-sm bg-slate-100 font-medium text-slate-800 border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+            <option value="Wheat" selected>🌾 Wheat (Tillering Stage)</option>
+            <option value="Rice">🌱 Rice / Paddy (Tillering)</option>
+            <option value="Maize">🌽 Maize (Knee-High)</option>
+            <option value="Cotton">🌿 Cotton (Squaring)</option>
+            <option value="Tomato">🍅 Tomato (Flowering)</option>
+            <option value="Potato">🥔 Potato (Tuber Bulking)</option>
+            <option value="Sugarcane">🎋 Sugarcane (Grand Growth)</option>
+          </select>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <label for="field-size" class="text-xs font-semibold text-slate-600 uppercase tracking-wider">Field Area:</label>
+          <div class="flex items-center space-x-1">
+            <input type="number" id="field-size" min="0.1" max="100" step="0.5" value="1.0" class="w-16 text-sm bg-slate-100 font-medium text-slate-800 border border-slate-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+            <span class="text-xs text-slate-500">Acres</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Environment Simulation Scenario Bar -->
+      <div class="flex items-center space-x-2">
+        <span class="text-xs text-slate-400 font-medium hidden sm:inline"><i class="fa-solid fa-flask mr-1"></i>Test Scenarios:</span>
+        <button onclick="triggerScenario('OPTIMAL')" class="px-2.5 py-1 text-xs font-medium rounded-md bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition">Normal</button>
+        <button onclick="triggerScenario('SOIL_DROUGHT')" class="px-2.5 py-1 text-xs font-medium rounded-md bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition">Dry Soil</button>
+        <button onclick="triggerScenario('HEAVY_RAIN')" class="px-2.5 py-1 text-xs font-medium rounded-md bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 transition">Monsoon</button>
+        <button onclick="triggerScenario('HEATWAVE')" class="px-2.5 py-1 text-xs font-medium rounded-md bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition">Heatwave</button>
+        <button onclick="triggerScenario('LOW_NITROGEN')" class="px-2.5 py-1 text-xs font-medium rounded-md bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 transition">Low NPK</button>
+      </div>
+    </div>
+
+    <!-- Live Telemetry KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      
+      <!-- Card 1: Soil Moisture -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 hover:shadow-md transition">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Soil Moisture</span>
+          <div class="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center">
+            <i class="fa-solid fa-droplet text-sm"></i>
+          </div>
+        </div>
+        <div class="flex items-baseline space-x-2">
+          <span id="metric-moisture" class="text-3xl font-extrabold text-slate-800">48.5</span>
+          <span class="text-sm font-semibold text-slate-400">%</span>
+        </div>
+        <div class="mt-3">
+          <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+            <div id="moisture-bar" class="h-2 rounded-full bg-sky-500 transition-all duration-500" style="width: 48.5%"></div>
+          </div>
+          <div class="flex justify-between items-center mt-1.5 text-[11px] text-slate-400">
+            <span>Target: <strong id="target-moisture-label" class="text-slate-600">50 - 70%</strong></span>
+            <span id="moisture-status-tag" class="text-sky-600 font-medium">Optimal</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: Microclimate (Temp & Humidity) -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 hover:shadow-md transition">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Microclimate</span>
+          <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+            <i class="fa-solid fa-temperature-half text-sm"></i>
+          </div>
+        </div>
+        <div class="flex items-baseline justify-between">
+          <div>
+            <div class="flex items-baseline space-x-1">
+              <span id="metric-temp" class="text-3xl font-extrabold text-slate-800">27.2</span>
+              <span class="text-sm font-semibold text-slate-400">°C</span>
+            </div>
+            <span class="text-[11px] text-slate-400">Ambient Temp</span>
+          </div>
+          <div class="text-right">
+            <div class="flex items-baseline space-x-1 justify-end">
+              <span id="metric-humidity" class="text-2xl font-bold text-slate-700">58.0</span>
+              <span class="text-xs font-semibold text-slate-400">%</span>
+            </div>
+            <span class="text-[11px] text-slate-400">Air Humidity</span>
+          </div>
+        </div>
+        <div class="mt-3 flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100">
+          <span><i class="fa-solid fa-cloud-rain mr-1 text-sky-400"></i>Rain Prob: <strong id="metric-rain-prob">15%</strong></span>
+          <span>ET₀: <strong id="metric-et0" class="text-slate-700">4.2 mm/d</strong></span>
+        </div>
+      </div>
+
+      <!-- Card 3: Soil Nutrients (NPK & pH) -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 hover:shadow-md transition">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Soil Chemistry</span>
+          <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <i class="fa-solid fa-seedling text-sm"></i>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="bg-slate-50 p-1.5 rounded-lg border border-slate-100">
+            <span class="text-[10px] font-bold text-slate-400 block">N</span>
+            <span id="metric-n" class="text-sm font-extrabold text-slate-800">45</span>
+            <span class="text-[9px] text-slate-400 block">ppm</span>
+          </div>
+          <div class="bg-slate-50 p-1.5 rounded-lg border border-slate-100">
+            <span class="text-[10px] font-bold text-slate-400 block">P</span>
+            <span id="metric-p" class="text-sm font-extrabold text-slate-800">30</span>
+            <span class="text-[9px] text-slate-400 block">ppm</span>
+          </div>
+          <div class="bg-slate-50 p-1.5 rounded-lg border border-slate-100">
+            <span class="text-[10px] font-bold text-slate-400 block">K</span>
+            <span id="metric-k" class="text-sm font-extrabold text-slate-800">150</span>
+            <span class="text-[9px] text-slate-400 block">ppm</span>
+          </div>
+        </div>
+        <div class="mt-2.5 flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100">
+          <span>Soil pH: <strong id="metric-ph" class="text-slate-800">6.8</strong></span>
+          <span id="ph-badge" class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-semibold">Optimal</span>
+        </div>
+      </div>
+
+      <!-- Card 4: Water Pump Actuator & Mode -->
+      <div id="pump-card" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 hover:shadow-md transition">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Actuator Status</span>
+          <div id="pump-icon-bg" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center transition">
+            <i id="pump-icon" class="fa-solid fa-faucet-drip text-sm"></i>
+          </div>
+        </div>
+        <div class="flex items-center justify-between">
+          <div>
+            <div id="pump-state-badge" class="text-2xl font-black text-slate-600">OFF</div>
+            <span class="text-[11px] text-slate-400">Submersible Pump</span>
+          </div>
+          <!-- Auto Mode Switch -->
+          <div class="flex flex-col items-end">
+            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Mode</span>
+            <button id="toggle-auto-btn" onclick="toggleAutoMode()" class="px-2.5 py-1 text-xs font-semibold rounded-full bg-brand-100 text-brand-700 border border-brand-200 hover:bg-brand-200 transition">
+              <i class="fa-solid fa-robot mr-1"></i>AUTO
+            </button>
+          </div>
+        </div>
+        <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+          <span class="text-[11px] text-slate-400">Manual Override:</span>
+          <button id="pump-override-btn" onclick="togglePumpManual()" class="px-3 py-1 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 transition">
+            Switch ON
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Intelligent Advisors Grid (Irrigation + Fertilization) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <!-- Advisor 1: Smart Irrigation Advisor -->
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center">
+                <i class="fa-solid fa-water"></i>
+              </div>
+              <h3 class="font-bold text-base text-slate-800">Smart Irrigation Advisor</h3>
+            </div>
+            <span id="irrigation-urgency-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+              Optimal
+            </span>
+          </div>
+
+          <!-- Advisory Explanation Banner -->
+          <div id="irrigation-advice-box" class="p-4 rounded-xl bg-slate-50 border border-slate-200 mb-4">
+            <p id="irrigation-advice-text" class="text-sm text-slate-700 leading-relaxed">
+              Evaluating soil moisture and evapotranspiration data...
+            </p>
+          </div>
+
+          <!-- Key Quantitative Metrics -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+              <span class="text-[11px] text-slate-400 block font-medium">Recommended Water</span>
+              <span id="water-liters-needed" class="text-lg font-bold text-slate-800">0 L</span>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+              <span class="text-[11px] text-slate-400 block font-medium">Pump Duration</span>
+              <span id="pump-runtime-needed" class="text-lg font-bold text-slate-800">0 mins</span>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 col-span-2 sm:col-span-1">
+              <span class="text-[11px] text-slate-400 block font-medium">Forecast Weather</span>
+              <span id="forecast-condition" class="text-xs font-semibold text-slate-700 truncate block mt-1">Clear</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-xs text-slate-400 pt-3 border-t border-slate-100">
+          <span><i class="fa-solid fa-microchip mr-1"></i>Algorithm: Hargreaves ETc + Soil Deficit</span>
+          <span id="auto-action-status" class="text-emerald-600 font-semibold">Auto-management active</span>
+        </div>
+      </div>
+
+      <!-- Advisor 2: Smart Fertilization & NPK Advisor -->
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                <i class="fa-solid fa-vial"></i>
+              </div>
+              <h3 class="font-bold text-base text-slate-800">Smart Fertilization Advisor</h3>
+            </div>
+            <span id="fertilizer-status-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+              Balanced
+            </span>
+          </div>
+
+          <!-- Recommended Fertilizer Dosages -->
+          <div class="grid grid-cols-3 gap-3 mb-4">
+            <div class="bg-gradient-to-b from-slate-50 to-emerald-50/30 p-3 rounded-xl border border-emerald-100">
+              <span class="text-[11px] text-emerald-800 font-bold block">Urea (46% N)</span>
+              <div class="mt-1">
+                <span id="urea-kg" class="text-lg font-extrabold text-slate-800">0</span>
+                <span class="text-xs text-slate-500">kg</span>
+              </div>
+              <span id="urea-bags" class="text-[11px] text-slate-500 font-medium">(0 bags)</span>
+            </div>
+            <div class="bg-gradient-to-b from-slate-50 to-blue-50/30 p-3 rounded-xl border border-blue-100">
+              <span class="text-[11px] text-blue-800 font-bold block">DAP (18:46:0)</span>
+              <div class="mt-1">
+                <span id="dap-kg" class="text-lg font-extrabold text-slate-800">0</span>
+                <span class="text-xs text-slate-500">kg</span>
+              </div>
+              <span id="dap-bags" class="text-[11px] text-slate-500 font-medium">(0 bags)</span>
+            </div>
+            <div class="bg-gradient-to-b from-slate-50 to-amber-50/30 p-3 rounded-xl border border-amber-100">
+              <span class="text-[11px] text-amber-800 font-bold block">MOP (60% K)</span>
+              <div class="mt-1">
+                <span id="mop-kg" class="text-lg font-extrabold text-slate-800">0</span>
+                <span class="text-xs text-slate-500">kg</span>
+              </div>
+              <span id="mop-bags" class="text-[11px] text-slate-500 font-medium">(0 bags)</span>
+            </div>
+          </div>
+
+          <!-- Schedule & Organic Alternatives Tabs -->
+          <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2 mb-2">
+            <div class="text-xs text-slate-700">
+              <strong class="text-slate-900 block mb-0.5"><i class="fa-solid fa-calendar-check text-brand-600 mr-1.5"></i>Application Schedule:</strong>
+              <p id="split-application-text" class="text-slate-600 text-xs">Basal dose and top-dressing details...</p>
+            </div>
+            <div class="text-xs text-slate-700 pt-2 border-t border-slate-200/60">
+              <strong class="text-slate-900 block mb-0.5"><i class="fa-solid fa-recycle text-emerald-600 mr-1.5"></i>Organic Recommendation:</strong>
+              <p id="organic-advice-text" class="text-slate-600 text-xs">Farmyard manure & bio-fertilizers...</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-100">
+          <span><i class="fa-solid fa-flask-vial mr-1"></i>Deficit to Target Formulation</span>
+          <span class="text-slate-500 font-medium" id="field-area-label">Area: 1.0 Acre</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Real-time Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Chart 1: Soil Moisture Trend (Span 2 cols on desktop) -->
+      <div class="lg:col-span-2 bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h4 class="font-bold text-slate-800 text-sm">Real-time Soil Moisture & Target Zone</h4>
+            <span class="text-xs text-slate-400">Live dynamic readings vs Wilting Point & Field Capacity</span>
+          </div>
+          <span class="text-xs bg-sky-50 text-sky-700 font-medium px-2 py-0.5 rounded-md border border-sky-100">Live Telemetry</span>
+        </div>
+        <div class="h-64">
+          <canvas id="moistureChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 2: NPK Radar / Comparison -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h4 class="font-bold text-slate-800 text-sm">NPK Balance vs Target</h4>
+            <span class="text-xs text-slate-400">Soil nutrient profile comparison</span>
+          </div>
+        </div>
+        <div class="h-64">
+          <canvas id="npkChart"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Live Event Log Table -->
+    <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80">
+      <div class="flex items-center justify-between mb-3">
+        <h4 class="font-bold text-slate-800 text-sm"><i class="fa-solid fa-list-check text-brand-600 mr-2"></i>Live Telemetry & Actuation Stream</h4>
+        <span class="text-xs text-slate-400">Auto-refreshed via WebSocket</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs text-slate-600">
+          <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+            <tr>
+              <th class="py-2.5 px-3">Timestamp</th>
+              <th class="py-2.5 px-3">Soil Moisture</th>
+              <th class="py-2.5 px-3">Temp / Humidity</th>
+              <th class="py-2.5 px-3">NPK (ppm)</th>
+              <th class="py-2.5 px-3">Pump State</th>
+              <th class="py-2.5 px-3">Advisory Status</th>
+            </tr>
+          </thead>
+          <tbody id="telemetry-log-tbody" class="divide-y divide-slate-100">
+            <!-- Dynamic Rows -->
+            <tr>
+              <td colspan="6" class="py-4 text-center text-slate-400">Waiting for live sensor data stream...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 py-4 mt-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 space-y-2 sm:space-y-0">
+      <div>AgriSense IoT Platform &copy; 2026. Precision Agriculture & Smart Actuation.</div>
+      <div class="flex items-center space-x-4">
+        <span>Hardware: ESP32 + Capacitive Moisture + NPK RS485</span>
+        <span>Backend: FastAPI + WebSockets</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Main JavaScript Logic -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
